@@ -11,6 +11,15 @@
     android:background="#000000"
     android:orientation="vertical">
 
+    <RadioButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TwoPlayers"
+        android:id="@+id/radioButton2"
+        android:layout_gravity="center"
+        android:checked="false"
+        android:background="#ff0d8e"/>
+
     <com.example.narek.tictaktoe.CrossView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -27,4 +36,13 @@
         android:layout_gravity="center_horizontal"
 
         />
+
+    <RadioButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="New RadioButton"
+        android:id="@+id/radioButton"
+        android:layout_weight="0.08" />
+
+
 </LinearLayout>
