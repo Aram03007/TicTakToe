@@ -8,7 +8,6 @@ import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.Pair;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -48,7 +47,6 @@ public class CrossView extends View {
 
 
     public void updateBoard(int[][] board) {
-//        TODO create copy of
         this.board = board;
         for (int i = 0; i < board[0].length; i++) {
             System.arraycopy(board[i], 0, this.board[i], 0, board.length);
@@ -67,7 +65,7 @@ public class CrossView extends View {
     }
 
     public interface OnSellTapListener {
-        public void onSellTapped(int row, int col);
+        void onSellTapped(int row, int col);
     }
 
 
@@ -95,7 +93,7 @@ public class CrossView extends View {
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setStyle(Paint.Style.FILL);
         textPaint.setColor(Color.BLACK);
-        textPaint.setTextSize(20);
+        textPaint.setTextSize(10);
 
         gestureDetector = new GestureDetectorCompat(getContext(), new TapRecognizer());
 
@@ -110,7 +108,7 @@ public class CrossView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        System.out.println("OnDraw");
+//        System.out.println("OnDraw");
 
         if (needUpdate) {
             recreateBoard();
@@ -125,9 +123,9 @@ public class CrossView extends View {
 
                 if (board[i][j] == 1) {
 
-                    canvas.drawText("X", cur.getBounds().centerX(), cur.getBounds().bottom - 50, textPaint);
+                    canvas.drawText("X", cur.getBounds().centerX(), cur.getBounds().bottom, textPaint);
                 }else if (board[i][j] == -1) {
-                    canvas.drawText("O", cur.getBounds().centerX(), cur.getBounds().bottom-50, textPaint);
+                    canvas.drawText("O", cur.getBounds().centerX(), cur.getBounds().bottom, textPaint);
 
                 }
             }
@@ -157,7 +155,7 @@ public class CrossView extends View {
 //    canvas.drawText("Some Text", 10, 25, textPaint);
 
     private void recreateBoard() {
-        Log.d(TAG, "start x: " + startX() + " start y: " + startY());
+//        Log.d(TAG, "start x: " + startX() + " start y: " + startY());
 
 
         int cellWidth = cellWidth();
@@ -186,7 +184,7 @@ public class CrossView extends View {
         int startY = (int) (startY() - padding * 0.5f);
         int rowIndex = (x - startX) / (cellWidth() + padding);
         int colIndex = (y - startY) / (cellWidth() + padding);
-        Log.d(TAG, "getCellIndexAt: (rowIndex, colIndex), (" + rowIndex + "," + colIndex + ")");
+//        Log.d(TAG, "getCellIndexAt: (rowIndex, colIndex), (" + rowIndex + "," + colIndex + ")");
 
 
         return rowIndex >= 3 || rowIndex < 0 || colIndex >= 3 || colIndex < 0 ? null : new Pair<>(rowIndex, colIndex);
@@ -196,15 +194,15 @@ public class CrossView extends View {
 
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
-            Log.d(TAG, "onSingleTapUp: onSingleTapUp");
+//            Log.d(TAG, "onSingleTapUp: onSingleTapUp");
             int touchX = (int) e.getX();
             int touchY = (int) e.getY();
-            Log.d(TAG, "onSingleTapUp: (x, y) " + touchX + " " + touchY);
+//            Log.d(TAG, "onSingleTapUp: (x, y) " + touchX + " " + touchY);
 
             int rowX = (int) e.getRawX();
             int rowY = (int) e.getRawY();
 
-            Log.d(TAG, "onSingleTapUp: raw (x, y) " + rowX + " " + rowY);
+//            Log.d(TAG, "onSingleTapUp: raw (x, y) " + rowX + " " + rowY);
 
             Pair<Integer,Integer> cur = cellIndexAt(touchX, touchY);
 

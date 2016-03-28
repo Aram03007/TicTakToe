@@ -2,11 +2,14 @@ package com.example.narek.tictaktoe;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.RadioButton;
+import android.widget.Switch;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private int[][] board = {
@@ -14,9 +17,7 @@ public class MainActivity extends AppCompatActivity {
             {0, 0, 0},
             {0, 0, 0}
     };
-    private int[][] preferredMoves = {
-            {1, 1}, {0, 0}, {0, 2}, {2, 0}, {2, 2},
-            {0, 1}, {1, 0}, {1, 2}, {2, 1}};
+
     private boolean isFirstPersonTurn = true;
     ChekWinner chekWinner;
 
@@ -39,14 +40,14 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        final RadioButton twoplayers = (RadioButton) findViewById(R.id.radioButton2);
-//        crossView.updateBoard(board);
+        final Switch twoplayers = (Switch) findViewById(R.id.switch1);
         crossView.setOnSellTapListener(new CrossView.OnSellTapListener() {
             @Override
             public void onSellTapped(int row, int col) {
                 assert twoplayers != null;
                 if (twoplayers.isChecked()) {
-                    if (isFirstPersonTurn) {
+                    if (isFirstPersonTurn && board[row][col] == 0) {
+
                         board[row][col] = 1;
 
 
@@ -128,17 +129,22 @@ public class MainActivity extends AppCompatActivity {
                                 .show();
                     }
                 } else {
-                    board[row][col] = 1;
-                    crossView.updateBoard(board);
-                    chekWinner = gameOver(board);
 
+                    if (board[row][col] != 1) {
 
-                    int[] tmp = move();
-                    if (tmp != null) {
-                        board[tmp[0]][tmp[1]] = -1;
+                        board[row][col] = 1;
                         crossView.updateBoard(board);
+                        chekWinner = gameOver(board);
 
+                        if (chekWinner == null) {
+
+                            int[] tmp = move();
+                            board[tmp[0]][tmp[1]] = -1;
+                            chekWinner = gameOver(board);
+
+                        }
                     }
+
 
                     if (chekWinner == ChekWinner.X_WIN) {
                         new AlertDialog.Builder(MainActivity.this)
@@ -299,26 +305,206 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public int[] move() {
-        for (int[] move : preferredMoves) {
-            if (content(move[0],move[1]) == Seed.EMPTY) {
-                return move;
-            }
-        }
-        return null;
+    int[] move() {
+        int[] result = minimax(4, Seed.oppSeed); // depth, max turn
+        return new int[]{result[1], result[2]};   // row, col
     }
 
-    private Seed content(int rowndex, int colIndex ) {
-        if (board[rowndex][colIndex] == 1) {
-            return Seed.CROSS;
-        }else if (board[rowndex][colIndex] == -1) {
-            return Seed.NOUGHT;
+//    void printBoard() {
+//        for (int i = 0; i < board.length; i++) {
+//            for (int j = 0; j < board.length; j++) {
+////                Log.d("dd", "" + board[i][j]);
+////                System.out.printf("%3d", board[i][j]);
+//            }
+//        }
+//    }
+
+    /**
+     * Recursive minimax at level of depth for either maximizing or minimizing player.
+     * Return int[3] of {score, row, col}
+     */
+    private int[] minimax(int depth, Seed player) {
+        // Generate possible next moves in a List of int[2] of {row, col}.
+        List<int[]> nextMoves = generateMoves();
+
+        // mySeed is maximizing; while oppSeed is minimizing
+        int bestScore = (player == Seed.mySeed) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        int currentScore;
+        int bestRow = -1;
+        int bestCol = -1;
+
+        if (nextMoves.isEmpty() || depth == 0) {
+            // Gameover or depth reached, evaluate score
+            bestScore = evaluate();
+            if (bestScore == 100 || bestScore == -100) {
+//                Log.d("game end", "" + bestScore);
+//                printBoard();
+
+            }
+        } else {
+            for (int[] move : nextMoves) {
+                // Try this move for the current "player"
+                setSEED(move[0], move[1], player);
+                if (player == Seed.mySeed) {  // mySeed (computer) is maximizing player
+                    currentScore = minimax(depth - 1, Seed.oppSeed)[0];
+                    if (currentScore > bestScore) {
+                        bestScore = currentScore;
+                        bestRow = move[0];
+                        bestCol = move[1];
+                    }
+                } else {  // oppSeed is minimizing player
+                    currentScore = minimax(depth - 1, Seed.mySeed)[0];
+                    if (currentScore < bestScore) {
+                        bestScore = currentScore;
+                        bestRow = move[0];
+                        bestCol = move[1];
+                    }
+                }
+                // Undo move
+                setSEED(move[0], move[1], Seed.EMPTY);
+            }
+        }
+        return new int[]{bestScore, bestRow, bestCol};
+    }
+
+    /**
+     * Find all valid next moves.
+     * Return List of moves in int[2] of {row, col} or empty list if gameover
+     */
+    private List<int[]> generateMoves() {
+        List<int[]> nextMoves = new ArrayList<>(); // allocate List
+
+        // If gameover, i.e., no next move
+        if (hasWon(Seed.mySeed) || hasWon(Seed.oppSeed)) {
+            return nextMoves;   // return empty list
+        }
+
+        // Search for empty cells and add to the List
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                if (content(row, col) == Seed.EMPTY) {
+                    nextMoves.add(new int[]{row, col});
+                }
+            }
+        }
+        return nextMoves;
+    }
+
+    private int evaluate() {
+        int score = 0;
+        // Evaluate score for each of the 8 lines (3 rows, 3 columns, 2 diagonals)
+        score += evaluateLine(0, 0, 0, 1, 0, 2);  // row 0
+        score += evaluateLine(1, 0, 1, 1, 1, 2);  // row 1
+        score += evaluateLine(2, 0, 2, 1, 2, 2);  // row 2
+        score += evaluateLine(0, 0, 1, 0, 2, 0);  // col 0
+        score += evaluateLine(0, 1, 1, 1, 2, 1);  // col 1
+        score += evaluateLine(0, 2, 1, 2, 2, 2);  // col 2
+        score += evaluateLine(0, 0, 1, 1, 2, 2);  // diagonal
+        score += evaluateLine(0, 2, 1, 1, 2, 0);  // alternate diagonal
+        return score;
+    }
+
+
+    private int evaluateLine(int row1, int col1, int row2, int col2, int row3, int col3) {
+        int score = 0;
+
+        // First cell
+        if (content(row1, col1) == Seed.mySeed) {
+            score = 1;
+        } else if (content(row1, col1) == Seed.oppSeed) {
+            score = -1;
+        }
+
+        // Second cell
+        if (content(row2, col2) == Seed.mySeed) {
+            if (score == 1) {   // cell1 is mySeed
+                score = 10;
+            } else if (score == -1) {  // cell1 is oppSeed
+                return 0;
+            } else {  // cell1 is empty
+                score = 1;
+            }
+        } else if (content(row2, col2) == Seed.oppSeed) {
+            if (score == -1) { // cell1 is oppSeed
+                score = -10;
+            } else if (score == 1) { // cell1 is mySeed
+                return 0;
+            } else {  // cell1 is empty
+                score = -1;
+            }
+        }
+
+        // Third cell
+        if (content(row3, col3) == Seed.mySeed) {
+            if (score > 0) {  // cell1 and/or cell2 is mySeed
+                score *= 10;
+            } else if (score < 0) {  // cell1 and/or cell2 is oppSeed
+                return 0;
+            } else {  // cell1 and cell2 are empty
+                score = 1;
+            }
+        } else if (content(row3, col3) == Seed.oppSeed) {
+            if (score < 0) {  // cell1 and/or cell2 is oppSeed
+                score *= 10;
+            } else if (score > 0) {  // cell1 and/or cell2 is mySeed
+                return 0;
+            } else {  // cell1 and cell2 are empty
+                score = -1;
+            }
+        }
+        return score;
+    }
+
+    private int[] winningPatterns = {
+            0b111000000, 0b000111000, 0b000000111, // rows
+            0b100100100, 0b010010010, 0b001001001, // cols
+            0b100010001, 0b001010100               // diagonals
+    };
+
+    /**
+     * Returns true if thePlayer wins
+     */
+    private boolean hasWon(Seed thePlayer) {
+        int pattern = 0b000000000;  // 9-bit pattern for the 9 cells
+        for (int row = 0; row < 3; ++row) {
+            for (int col = 0; col < 3; ++col) {
+                if (content(row, col) == thePlayer) {
+
+                    pattern |= (1 << (row * 3 + col));
+                }
+            }
+        }
+        for (int winningPattern : winningPatterns) {
+            if ((pattern & winningPattern) == winningPattern) return true;
+        }
+        return false;
+    }
+
+
+    private Seed content(int rowIndex, int colIndex) {
+        if (board[rowIndex][colIndex] == 1) {
+            return Seed.mySeed;
+        } else if (board[rowIndex][colIndex] == -1) {
+            return Seed.oppSeed;
         }
 
         return Seed.EMPTY;
     }
 
-    enum Seed {
-        CROSS, EMPTY, NOUGHT
+    private void setSEED(int row, int col, Seed seed) {
+        if (seed == Seed.mySeed) {
+            board[row][col] = 1;
+        } else if (seed == Seed.oppSeed) {
+            board[row][col] = -1;
+
+        } else {
+            board[row][col] = 0;
+
+        }
     }
+
+    enum Seed {
+        mySeed, EMPTY, oppSeed
+    }
+
 }
