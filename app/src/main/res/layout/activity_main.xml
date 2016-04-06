@@ -22,14 +22,44 @@
         android:checked="false"
         android:layout_gravity="center_horizontal"
         android:layout_margin="10dp" />
+    <RadioGroup
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#1b6979"
+        android:layout_margin="10dp"
+        android:layout_gravity="center"
+        android:orientation="horizontal"
+        android:id="@+id/radioGroup">
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="left"
+            android:checked="true"
+            android:id="@+id/eazy"
+            android:text="Eazy"/>
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:id="@+id/normal"
+            android:text="Normal"/>
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="right"
+            android:id="@+id/hard"
+            android:text="Hard"/>
+
+    </RadioGroup>
 
     <com.example.narek.tictaktoe.CrossView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:id="@+id/crossView"
         android:layout_weight="1.06"
-        android:layout_gravity="center"
-        android:background="#b5e8ea"/>
+        android:layout_gravity="right"
+        android:background="#165759"/>
 
     <Button
         android:layout_width="wrap_content"

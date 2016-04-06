@@ -5,4 +5,5 @@ package com.example.narek.tictaktoe;
  */
 public enum ChekWinner {
     X_WIN, O_WIN, DRAW,
+
 }
