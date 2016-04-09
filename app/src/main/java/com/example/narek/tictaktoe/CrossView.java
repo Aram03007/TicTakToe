@@ -1,5 +1,6 @@
 package com.example.narek.tictaktoe;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -7,14 +8,17 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PathMeasure;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RectShape;
 import android.os.Build;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Pair;
+import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -28,9 +32,11 @@ import java.util.List;
 public class CrossView extends View {
     private Path path;
     private Paint paint;
+    private int animationRowIndex = -1;
+    private int animationColIndex = -1;
 
-    private static final long animSpeedInMs = 1;
-    private static final long animMsBetweenStrokes = 500;
+    private static final float animSpeedInMs = 0.5f;
+    private static final long animMsBetweenStrokes = 10;
     private long animLastUpdate;
     private boolean animRunning;
     private int animCurrentCountour;
@@ -49,10 +55,10 @@ public class CrossView extends View {
     private List<ShapeDrawable> shapeDrawables = new ArrayList<>();
     //    sahmanenq massiv vortex 1} nshanakum e X, -1 - O, isk 0 - der voroshvac che;
     private int[][] board = {
-                            {0,0,0},
-                            {0,0,0},
-                            {0,0,0}
-                            };
+            {0,0,0},
+            {0,0,0},
+            {0,0,0}
+    };
     private boolean needUpdate = true;
 
 
@@ -62,20 +68,28 @@ public class CrossView extends View {
 
     private GestureDetectorCompat gestureDetector;
     private int padding = 10;
-    private Paint textPaint;
 
+    public void updateBoard(int[][] board, int animationRowIndex, int animationColIndex) {
 
-    public void updateBoard(int[][] board) {
         this.board = board;
         for (int i = 0; i < board[0].length; i++) {
             System.arraycopy(board[i], 0, this.board[i], 0, board.length);
         }
+        this.animationRowIndex = animationRowIndex;
+        this.animationColIndex = animationColIndex;
+
+        startAnimation();
+
+
         invalidate();
     }
 
 
 
-
+    public static float dipToPixels(Context context, float dipValue) {
+        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue, metrics);
+    }
 
 
     private final void initDisplayKanjiView() {
@@ -87,7 +101,8 @@ public class CrossView extends View {
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeJoin(Paint.Join.ROUND);
         paint.setStrokeCap(Paint.Cap.ROUND);
-        paint.setStrokeWidth(50);
+        paint.setStrokeWidth(dipToPixels(getContext(), 10));
+
 
         path = new Path();
         animRunning = false;
@@ -128,15 +143,7 @@ public class CrossView extends View {
     }
 
     private void init(AttributeSet attrs, int defStyle) {
-        // Load attributes
-        textPaint = new Paint();
-        textPaint.setTextAlign(Paint.Align.CENTER);
-        textPaint.setStyle(Paint.Style.FILL);
-        textPaint.setColor(Color.BLACK);
-        textPaint.setTextSize(10);
-
         gestureDetector = new GestureDetectorCompat(getContext(), new TapRecognizer());
-
     }
 
     @Override
@@ -144,6 +151,7 @@ public class CrossView extends View {
         return gestureDetector.onTouchEvent(event);
     }
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
@@ -157,100 +165,84 @@ public class CrossView extends View {
 
         for (int i = 0; i < rowCount; i++) {
             for (int j = 0; j < rowCount; j++) {
+
                 final ShapeDrawable cur = shapeDrawables.get(i * rowCount + j);
 
                 cur.draw(canvas);
 
+                if (i == animationRowIndex && j == animationColIndex) continue;
 
-                if (board[i][j] == 1) {
-                    Log.d("ss", "in x");
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                        Path path = new Path();
-
-
-
-                        path.setLastPoint(cur.getBounds().centerX(), cur.getBounds().centerY());
-                        path.lineTo(cur.getBounds().left + 25, cur.getBounds().top + 25);
-                        path.lineTo(cur.getBounds().centerX(), cur.getBounds().centerY());
-//                        path.setLastPoint(cur.getBounds().centerX(), cur.getBounds().centerY());
-
-
-                        path.lineTo(cur.getBounds().right - 25, cur.getBounds().bottom - 25);
-                        path.lineTo(cur.getBounds().centerX(), cur.getBounds().centerY());
-
-//                        path.setLastPoint(cur.getBounds().centerX(), cur.getBounds().centerY());
-
-                        path.lineTo(cur.getBounds().right - 25, cur.getBounds().top + 25);
-                        path.lineTo(cur.getBounds().centerX(), cur.getBounds().centerY());
-
-//                        path.setLastPoint(cur.getBounds().centerX(), cur.getBounds().centerY());
-
-                        path.lineTo(cur.getBounds().left + 25, cur.getBounds().bottom - 25);
-                        path.lineTo(cur.getBounds().centerX(), cur.getBounds().centerY());
-
-//                        path.setLastPoint(cur.getBounds().centerX(), cur.getBounds().centerY());
-
-                        setPath(path);
-
-
-                    }
-
-
-                        if (animRunning) {
-
-                                drawAnimation(canvas);
-
-                        } else {
-                            drawStatic(canvas);
-
-
-
-                    }
-//        }
-
-//                    canvas.drawText("X", cur.getBounds().centerX(), cur.getBounds().bottom, textPaint);
-
-                }else if (board[i][j] == -1) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//                        Path p = new Path();
-                        path.addArc(cur.getBounds().left + 25, cur.getBounds().top + 25, cur.getBounds().right - 25, cur.getBounds().bottom - 25, 0, 360);
-//                        setPath(p);
-                    }
-                        if (animRunning) {
-
-                                drawAnimation(canvas);
-
-                        } else {
-                            drawStatic(canvas);
-                        }
-
-
-                    }
-
-
-
-//                    if (animRunning) {
-//                        drawAnimation(canvas);
-//
-//                    }else {
-//                    }
-//                    canvas.drawText("O", cur.getBounds().centerX(), cur.getBounds().bottom, textPaint);
-
+                if (board[i][j] == 1) {//draw x
+                    drawCross(canvas, cur.getBounds());
                 }
-//                drawStatic(canvas);
 
+
+                if (board[i][j] == -1) {//draw zero
+                    drawZero(canvas, cur.getBounds());
+                }
             }
+
+            if (animationRowIndex >= 0 && animationColIndex >= 0) {
+                final ShapeDrawable cur = shapeDrawables.get(animationRowIndex * rowCount + animationColIndex);
+                Rect bounds = cur.getBounds();
+
+
+                float padding = (float) (bounds.width() * 0.15);
+                Path path = new Path();
+                if (board[animationRowIndex][animationColIndex] == 1) {
+                    //first line
+                    path.moveTo(bounds.left + padding, bounds.top + padding);
+                    path.lineTo(bounds.right - padding, bounds.bottom - padding);
+
+                    //second line
+                    path.moveTo(bounds.right - padding, bounds.top + padding);
+                    path.lineTo(bounds.left + padding, bounds.bottom - padding);
+
+                } else  {
+                    path.addCircle(bounds.centerX(), bounds.centerY(), bounds.width() * 0.35f, Path.Direction.CW);
+                }
+
+                setPath(path);
+
+
+                if (animRunning) {
+                    drawAnimation(canvas);
+                } else {
+                    if (board[animationRowIndex][animationColIndex] == 1) {
+                        drawCross(canvas, cur.getBounds());
+                    }else {
+                        drawZero(canvas, cur.getBounds());
+                    }
+                }
+            }
+
 
         }
 
 
+    }
 
-//    @Override
-//    protected void onDraw(Canvas canvas) {
-//        if (animRunning) {
-//            drawAnimation(canvas);
-//        }
-//    }
+    private void drawZero(Canvas canvas, Rect bounds) {
+        canvas.drawCircle(bounds.centerX(), bounds.centerY(), bounds.width() * 0.35f, paint);
+    }
+
+    private void drawCross(Canvas canvas, Rect bounds) {
+        float padding = (float) (bounds.width() * 0.15);
+        Path path = new Path();
+        //first line
+        path.moveTo(bounds.left + padding, bounds.top + padding);
+        path.lineTo(bounds.right - padding, bounds.bottom - padding);
+
+        //second line
+        path.moveTo(bounds.right - padding, bounds.top + padding);
+        path.lineTo(bounds.left + padding, bounds.bottom - padding);
+
+        canvas.drawPath(path, paint);
+    }
+
+
+
+
     private void drawAnimation(Canvas canvas) {
         if (animPathMeasure == null) {
             // Start of animation. Set it up.
@@ -295,9 +287,6 @@ public class CrossView extends View {
 
         invalidate();
     }
-    private void drawStatic(Canvas canvas) {
-        canvas.drawPath(path, paint);
-    }
 
     private int contentWidth() {
         return getWidth() - getPaddingLeft() - getPaddingRight();
@@ -324,7 +313,6 @@ public class CrossView extends View {
 
 
         int cellWidth = cellWidth();
-        textPaint.setTextSize(cellWidth);
         shapeDrawables.clear();
         for (int i = 0; i < rowCount; i++) {
             for (int j = 0; j < rowCount; j++) {
@@ -374,7 +362,6 @@ public class CrossView extends View {
             if (cur != null && onSellTapListener != null) {
                 onSellTapListener.onSellTapped(cur.first,cur.second);
             }
-            startAnimation();
 
             return true;
         }

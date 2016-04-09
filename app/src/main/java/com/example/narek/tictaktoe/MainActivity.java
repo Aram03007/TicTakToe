@@ -2,7 +2,9 @@ package com.example.narek.tictaktoe;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -10,6 +12,10 @@ import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Switch;
+
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +25,11 @@ public class MainActivity extends AppCompatActivity {
     GameLogic logic;
     private boolean isFirstPersonTurn = true;
     ChekWinner chekWinner;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
 
     @Override
@@ -41,11 +52,11 @@ public class MainActivity extends AppCompatActivity {
                 int id = radioGroup.getCheckedRadioButtonId();
                 if (id == R.id.eazy) {
                     logic.setLevel(Level.EAZY);
-                }else if (id == R.id.normal) {
+                } else if (id == R.id.normal) {
                     logic.setLevel(Level.NORMAL);
 
 
-                }else if (id == R.id.hard) {
+                } else if (id == R.id.hard) {
                     logic.setLevel(Level.HARD);
 
 
@@ -54,22 +65,19 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-
-
-
         button2.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 resetBoard();
-                crossView.updateBoard(logic.getBoard());
+                crossView.updateBoard(logic.getBoard(), -1, -1);
 
             }
         });
         final Switch twoplayers = (Switch) findViewById(R.id.switch1);
         crossView.setOnSellTapListener(new CrossView.OnSellTapListener() {
             @Override
-            public void onSellTapped(int row, int col) {
+            public void onSellTapped(final int row, final int col) {
                 assert twoplayers != null;
                 if (twoplayers.isChecked()) {
                     if (isFirstPersonTurn && logic.getBoard()[row][col] != 1 && logic.getBoard()[row][col] != -1) {
@@ -78,19 +86,17 @@ public class MainActivity extends AppCompatActivity {
                         isFirstPersonTurn = !isFirstPersonTurn;
 
 
-
-
-                    } else if(logic.getBoard()[row][col] != 1 && logic.getBoard()[row][col] != -1){
+                    } else if (logic.getBoard()[row][col] != 1 && logic.getBoard()[row][col] != -1) {
 
                         logic.getBoard()[row][col] = -1;
                         isFirstPersonTurn = !isFirstPersonTurn;
 
 
-
                     }
 
 
-                    crossView.updateBoard(logic.getBoard());
+                    crossView.updateBoard(logic.getBoard(), row, col);
+
 
                     chekWinner = gameOver(logic.getBoard());
 
@@ -108,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
                                 .setPositiveButton("NEW GAME", new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
                                         resetBoard();
-                                        crossView.updateBoard(logic.getBoard());
+                                        crossView.updateBoard(logic.getBoard(), -1, -1);
 
 
                                     }
@@ -130,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
                                 .setPositiveButton("NEW GAME", new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
                                         resetBoard();
-                                        crossView.updateBoard(logic.getBoard());
+                                        crossView.updateBoard(logic.getBoard(), -1, -1);
 
 
                                     }
@@ -152,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
                                 .setPositiveButton("NEW GAME", new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
                                         resetBoard();
-                                        crossView.updateBoard(logic.getBoard());
+                                        crossView.updateBoard(logic.getBoard(), -1, -1);
 
 
                                     }
@@ -166,16 +172,26 @@ public class MainActivity extends AppCompatActivity {
                     if (logic.getBoard()[row][col] != 1 && logic.getBoard()[row][col] != -1) {
 
                         logic.getBoard()[row][col] = 1;
-                        crossView.updateBoard(logic.getBoard());
-                        chekWinner = gameOver(logic.getBoard());
+                        crossView.updateBoard(logic.getBoard(), row, col);
 
-                        if (chekWinner == null) {
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                int[] tmp = logic.move();
+                                crossView.updateBoard(logic.getBoard(), tmp[0], tmp[1]);
 
-                            int[] tmp = logic.move();
-                            logic.getBoard()[tmp[0]][tmp[1]] = -1;
-                            chekWinner = gameOver(logic.getBoard());
+                                chekWinner = gameOver(logic.getBoard());
 
-                        }
+                                if (chekWinner == null) {
+                                    logic.getBoard()[tmp[0]][tmp[1]] = -1;
+                                    chekWinner = gameOver(logic.getBoard());
+
+                                }
+
+                            }
+                        }, 500);
+
+
                     }
 
 
@@ -193,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
                                 .setPositiveButton("NEW GAME", new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
                                         resetBoard();
-                                        crossView.updateBoard(logic.getBoard());
+                                        crossView.updateBoard(logic.getBoard(), -1, -1);
 
 
                                     }
@@ -215,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
                                 .setPositiveButton("NEW GAME", new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
                                         resetBoard();
-                                        crossView.updateBoard(logic.getBoard());
+                                        crossView.updateBoard(logic.getBoard(), -1, -1);
 
 
                                     }
@@ -237,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
                                 .setPositiveButton("NEW GAME", new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
                                         resetBoard();
-                                        crossView.updateBoard(logic.getBoard());
+                                        crossView.updateBoard(logic.getBoard(), -1, -1);
 
 
                                     }
