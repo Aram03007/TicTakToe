@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:text="TwoPlayers"
         android:id="@+id/switch1"
-        android:background="#b30f9f"
+        android:background="#b3820f"
         style="@style/Base.TextAppearance.AppCompat.Button"
         android:checked="false"
         android:layout_gravity="center_horizontal"
